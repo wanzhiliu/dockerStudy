@@ -2,4 +2,27 @@
   eg registry 186.100.8.289:5000  如果想从186.100.8.118上push镜像，需要把118的 :/etc/sysconfig/docker启动项添加
   OPTIONS='--selinux-enabled --insecure-registry 186.100.8.249:5000'
 
-2
+2 启动registry
+   docker run -d -p 5000:5000 registry
+  
+3 docker 存储驱动
+  http://static.dockerone.com/ppt/filedriver.html#1
+  http://www.projectatomic.io/docs/docker-storage-recommendation/
+  
+4 docker save load镜像
+   docker save -o test.tar test
+   docker load -i test.tar
+   
+5使用内存做docker后端
+  modprobe brd rd_size=30000000
+  mkfs.btrfs  -f  /dev/ram0
+  mount /dev/ram0 /var/lib/docker
+  docker -d --insecure-registry=172.28.0.2:5000 -s btrfs &
+  
+6怎么进入docker进程
+    1首先获取容器进程ID 
+    PID=$(docker inspect --format "{{ .State.Pid }}" <container>)  或者 docker inspect <container>然后grep一下
+    2使用nsenter
+    nsenter --target $PID --mount --uts --ipc --net --pid 就可以进入进程
+  
+

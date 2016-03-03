@@ -1,0 +1,5 @@
+1 docker push镜像到私有仓库的时候，需要在本机docker目录上增加启动项
+  eg registry 186.100.8.289:5000  如果想从186.100.8.118上push镜像，需要把118的 :/etc/sysconfig/docker启动项添加
+  OPTIONS='--selinux-enabled --insecure-registry 186.100.8.249:5000'
+
+2

@@ -1,3 +1,5 @@
+文章链接 http://www.infoq.com/cn/articles/docker-network-and-pipework-open-source-explanation-practice
+
 1。 Docker的四种网络模式
     host模式，使用--net=host指定。
     container模式，使用--net=container:NAME_or_ID指定。
@@ -62,4 +64,41 @@
 除此之外，我们还可以自定义Docker使用的IP地址、DNS等信息，甚至使用自己定义的网桥，但是其工作方式还是一样的。
     
     
+2. pipework的使用以及源码分析
+
+Docker自身的网络功能比较简单，不能满足很多复杂的应用场景。因此，有很多开源项目用来改善Docker的网络功能，如pipework、weave、flannel等。
+这里，就先介绍一下pipework的使用和工作原理。
+
+pipework是由Docker的工程师Jérôme Petazzoni开发的一个Docker网络配置工具，由200多行shell实现，方便易用。
+下面用三个场景来演示pipework的使用和工作原理。
+Docker自身的网络功能比较简单，不能满足很多复杂的应用场景。因此，有很多开源项目用来改善Docker的网络功能，如pipework、weave、flannel等。这里，就先介绍一下pipework的使用和工作原理。
+
+pipework是由Docker的工程师Jérôme Petazzoni开发的一个Docker网络配置工具，由200多行shell实现，方便易用。下面用三个场景来演示pipework的使用和工作原理。
+
+2.1 将Docker容器配置到本地网络环境中
+
+为了使本地网络中的机器和Docker容器更方便的通信，我们经常会有将Docker容器配置到和主机同一网段的需求。这个需求其实很容易实现，我们只要将Docker容器和主机的网卡桥接起来，再给Docker容器配上IP就可以了。
+
+下面我们来操作一下，我主机A地址为10.10.101.105/24,网关为10.10.101.254,需要给Docker容器的地址配置为10.10.101.150/24。在主机A上做如下操作：
+
+#安装pipework
+git clone https://github.com/jpetazzo/pipework
+cp ~/pipework/pipework /usr/local/bin/
+#启动Docker容器。
+docker run -itd --name test1 ubuntu /bin/bash
+#配置容器网络，并连到网桥br0上。网关在IP地址后面加@指定。
+#若主机环境中存在dhcp服务器，也可以通过dhcp的方式获取IP
+#pipework br0 test1 dhcp
+pipework br0 test1 10.10.101.150/24@10.10.101.254
+#将主机eth0桥接到br0上，并把eth0的IP配置在br0上。这里由于是远程操作，中间网络会断掉，所以放在一条命令中执行。
+ip addr add 10.10.101.105/24 dev br0; \
+    ip addr del 10.10.101.105/24 dev eth0; \
+    brctl addif br0 eth0; \
+    ip route del default; \
+    ip route add default gw 10.10.101.254 dev br0
+    
+pipework工作原理分析
+那么容器到底发生了哪些变化呢？我们docker attach到test1上，发现容器中多了一块eth1的网卡，并且配置了10.10.101.150/24的IP，而且默认路由也改为了10.10.101.254。这些都是pipework帮我们配置的。通过查看源代码，
+可以发现pipework br0 test1 10.10.101.150/24@10.10.101.254是由以下命令完成的（这里只列出了具体执行操作的代码）。
+
 

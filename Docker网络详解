@@ -24,3 +24,9 @@
 
 这个模式和前两个不同。在这种模式下，Docker容器拥有自己的Network Namespace，但是，并不为Docker容器进行任何网络配置。
 也就是说，这个Docker容器没有网卡、IP、路由等信息。需要我们自己为Docker容器添加网卡、配置IP等。
+
+1.4 bridge模式
+  bridge模式是Docker默认的网络设置，此模式会为每一个容器分配一个Network Namespace，设置IP等，并将一个主机的Docker容器连接到虚拟网桥上
+
+1.4.1 bridge模式的拓扑
+
